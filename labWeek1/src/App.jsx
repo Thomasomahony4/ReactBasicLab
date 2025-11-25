@@ -1,34 +1,39 @@
 import './App.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddTaskForm from './components/Form';
 import { v4 as uuidv4 } from 'uuid';
+import {getTasks, addTask, deleteTask, updateTask} from "./api/tasky-api";
 
 
 import Task from './components/Task';
 
 function App() {
-      const [ taskState, setTaskState ] = useState({
-    tasks: [
-      { id: 1, title:"Dishes", description: "Empty dishwasher", deadline: "Today", priority: "Low", done: false },
-      { id: 2, title: "Laundry", description: "Fold clothes and put away", deadline: "Tomorrow", priority: "High", done: false },
-      { id: 3, title: "Tidy up", description: "Clean the house", deadline: "Today", priority: "Medium", done: false }
-    ]
-  });
+      const [ taskState, setTaskState ] = useState({tasks: []});
+
+useEffect(() => {
+    getTasks().then(tasks => {
+      setTaskState({tasks: tasks});
+    });
+  }, []);	
 
     //done handler
-    const doneHandler = (taskIndex) => {
-    const tasks = [...taskState.tasks];
-    tasks[taskIndex].done = !tasks[taskIndex].done;
-    setTaskState({tasks});
-    console.log(`${taskIndex} ${tasks[taskIndex].done}`);
-  }
+        const doneHandler = (taskIndex) => {
+      const tasks = [...taskState.tasks];
+      tasks[taskIndex].done = !tasks[taskIndex].done;
+      updateTask(tasks[taskIndex]);
+      setTaskState({tasks});
+    }
+
 
     //delete handler
-    const deleteHandler = (taskIndex) => {
+      const deleteHandler = (taskIndex) => {
     const tasks = [...taskState.tasks];
+    const id=tasks[taskIndex]._id;
     tasks.splice(taskIndex, 1);
+    deleteTask(id);
     setTaskState({tasks});
-  } 
+  }
+
 
     //update handler
     const formChangeHandler = (event) => {
@@ -53,26 +58,23 @@ function App() {
     setFormState(form);
   }
 
-    //add handler
-    const formSubmitHandler = (event) => {
+      const formSubmitHandler = async (event) => {
     event.preventDefault();
-
-    const tasks = [...taskState.tasks];
+    const tasks = taskState.tasks?[...taskState.tasks]:[];
     const form = {...formState};
-
-    form.id = uuidv4();
-    
-    tasks.push(form);
+    const newTask = await addTask(form);
+    tasks.push(newTask);
     setTaskState({tasks});
   }
 
-  //template(? for lack of better word) needed for add handler
-  const [ formState, setFormState ] = useState({
+
+    const [ formState, setFormState ] = useState({
     title: "",
     description: "",
     deadline: "",
-    priority: ""
+    priority: "Low"
   });
+
 
     //map
     return (
@@ -84,7 +86,7 @@ function App() {
       description={task.description}
       deadline={task.deadline}
       priority={task.priority}
-      key={task.id}
+      key={task._id}        
       done={task.done}
       deleteTask = {() => deleteHandler(index)}
       markDone={() => doneHandler(index)}
