@@ -1,32 +1,36 @@
 import './App.css';
-import React, { useState, useEffect } from 'react';
+import Task from './components/Task';
 import AddTaskForm from './components/Form';
-import { v4 as uuidv4 } from 'uuid';
+import React, { useState, useEffect } from 'react';
 import {getTasks, addTask, deleteTask, updateTask} from "./api/tasky-api";
 
-
-import Task from './components/Task';
-
 function App() {
-      const [ taskState, setTaskState ] = useState({tasks: []});
+  
+  const [ taskState, setTaskState ] = useState({tasks: []});
 
-useEffect(() => {
-    getTasks().then(tasks => {
-      setTaskState({tasks: tasks});
+  useEffect(() => {
+      getTasks().then(tasks => {
+        setTaskState({tasks: tasks});
+      });
+    }, []);	
+  
+    const [ formState, setFormState ] = useState({
+      title: "",
+      description: "",
+      deadline: "",
+      priority: "Low"
     });
-  }, []);	
+  
+  //console.log(formState);
 
-    //done handler
-        const doneHandler = (taskIndex) => {
-      const tasks = [...taskState.tasks];
-      tasks[taskIndex].done = !tasks[taskIndex].done;
-      updateTask(tasks[taskIndex]);
-      setTaskState({tasks});
-    }
+  const doneHandler = (taskIndex) => {
+    const tasks = [...taskState.tasks];
+    tasks[taskIndex].done = !tasks[taskIndex].done;
+    updateTask(tasks[taskIndex]);
+    setTaskState({tasks});
+  }
 
-
-    //delete handler
-      const deleteHandler = (taskIndex) => {
+  const deleteHandler = (taskIndex) => {
     const tasks = [...taskState.tasks];
     const id=tasks[taskIndex]._id;
     tasks.splice(taskIndex, 1);
@@ -34,9 +38,7 @@ useEffect(() => {
     setTaskState({tasks});
   }
 
-
-    //update handler
-    const formChangeHandler = (event) => {
+  const formChangeHandler = (event) => {
     let form = {...formState};
 
     switch(event.target.name) {
@@ -51,14 +53,14 @@ useEffect(() => {
           break;
       case "priority":
           form.priority = event.target.value;
-          break;
+          break;      
       default:
           form = formState;
     }
     setFormState(form);
   }
 
-      const formSubmitHandler = async (event) => {
+  const formSubmitHandler = async (event) => {
     event.preventDefault();
     const tasks = taskState.tasks?[...taskState.tasks]:[];
     const form = {...formState};
@@ -66,37 +68,26 @@ useEffect(() => {
     tasks.push(newTask);
     setTaskState({tasks});
   }
-
-
-    const [ formState, setFormState ] = useState({
-    title: "",
-    description: "",
-    deadline: "",
-    priority: "Low"
-  });
-
-
-    //map
-    return (
+  
+  return (
     <div className="container">
       <h1>Tasky</h1>
-          {taskState.tasks.map((task, index) => (              
-    <Task 
-      title={task.title}
-      description={task.description}
-      deadline={task.deadline}
-      priority={task.priority}
-      key={task._id}        
-      done={task.done}
-      deleteTask = {() => deleteHandler(index)}
-      markDone={() => doneHandler(index)}
-    />
-  ))}
+      {taskState.tasks.map((task, index) => (              
+        <Task 
+          title={task.title}
+          description={task.description}
+          deadline={task.deadline}
+          key={task._id}
+          done={task.done}
+          priority={task.priority}
+          markDone={() => doneHandler(index)}
+          deleteTask = {() => deleteHandler(index)}
+        />
+      ))}
       <AddTaskForm submit={formSubmitHandler} change={formChangeHandler} />
+
     </div>
   );
-
 }
-
 
 export default App;
